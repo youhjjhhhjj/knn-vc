@@ -85,7 +85,7 @@ class KNeighborsVC(nn.Module):
         """
         # load audio
         if weights == None: weights = self.weighting
-        if type(path) in [str, Path]:
+        if type(path) == str or isinstance(path, Path):
             x, sr = torchaudio.load(path, normalize=True)
         else:
             x: Tensor = path
@@ -96,6 +96,10 @@ class KNeighborsVC(nn.Module):
             print(f"resample {sr} to {self.sr} in {path}")
             x = torchaudio.functional.resample(x, orig_freq=sr, new_freq=self.sr)
             sr = self.sr
+
+        if x[0].shape[0] != 1:
+            print(f"convert stereo to mono in {path}")
+            x = torch.mean(x, dim=0, keepdim=True)
             
         # trim silence from front and back
         if vad_trigger_level > 1e-3:
